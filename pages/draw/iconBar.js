@@ -1,8 +1,10 @@
 import React, {Component, useEffect} from 'react';
 import ReplayIcon from '@material-ui/icons/Replay';
-import BrushIcon from '@material-ui/icons/Brush';
+import OpacityIcon from '@material-ui/icons/Opacity';
 import StopIcon from '@material-ui/icons/Stop';
+import BrushIcon from '@material-ui/icons/Brush';
 import SaveIcon from '@material-ui/icons/Save';
+import FormatColorFillIcon from '@material-ui/icons/FormatColorFill';
 import { ChromePicker } from 'react-color';
 
 export default class IconBar extends Component {
@@ -43,6 +45,10 @@ showColorTool = () => {
     
 }
 
+handlToolChange = (tool) => {
+    this.props.sendTool(tool)
+}
+
 clearCanvas = () => {
     this.props.cRef.getContext('2d').fillStyle = "#fff"
     this.props.cRef.getContext('2d').fillRect(0, 0, 500, 500)
@@ -78,7 +84,7 @@ IconsBar = () => (
 
         <div className="icon-bar">
             <button onClick={this.sendUndoAction}><ReplayIcon/></button>
-            <button onClick={this.showColorTool}><BrushIcon/></button>
+            <button onClick={this.showColorTool}><OpacityIcon/></button>
             <div className="color-picker">
                 <ChromePicker 
                     color={ this.props.currentColor }
@@ -86,6 +92,8 @@ IconsBar = () => (
                     disableAlpha={true}
                 />
             </div>
+            <button onClick={() => this.props.sendTool("draw")}><BrushIcon/></button>
+            <button onClick={() => this.props.sendTool("fill")}><FormatColorFillIcon/></button>
             <button><StopIcon/></button>
             <button><SaveIcon/></button>
             <button onClick={this.clearCanvas}>Clear</button>
@@ -105,6 +113,10 @@ IconsBar = () => (
             flex-basis: 0;
             flex-grow: 1;
             flex-shrink: 1;
+        }
+
+        .icon-bar:nth-child(2): {
+            color: ${this.props.currentColor}
         }
 
         .color-picker {

@@ -1,5 +1,6 @@
+import { Work } from '@material-ui/icons';
 import React, {Component, useRef, useEffect, useState} from 'react';
-import { getData, generateQrCode } from '../work';
+import { getData, hexToRGB, rgbToHEX } from '../work';
 
 export default class Map extends Component {
     constructor(props) {
@@ -71,7 +72,8 @@ export default class Map extends Component {
             let priorMove = {
                 coordX: sick.newX,
                 coordY: sick.newY,
-                color: priorColor
+                color: priorColor,
+                type: "draw"
             }
             //If array does not have atleast one item so .length returns something, 
             //next if statement will break. This check insures theres atleast one item added to array.
@@ -84,7 +86,7 @@ export default class Map extends Component {
             console.log(priorColor)
             if((sick.newX == this.props.actionArray[this.props.actionArray.length -1].coordX && sick.newY == this.props.actionArray[this.props.actionArray.length -1].coordY)) {
                 sameBlock = true
-                if(ctx.fillStyle != this.rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) ) {
+                if(ctx.fillStyle != rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) ) {
                     sameBlock = false
                 }
 
@@ -104,15 +106,24 @@ export default class Map extends Component {
             }
         }
 
-        canv.onmousedown = (e) => {
-            this.draw(e)
+        canv.onmousedown = (e) => {   
             clicked = true;
+            if (this.props.currentTool == "fill") {
+                this.fillArea(e, ctx)
+            }
+            else {
+                this.draw(e)
+            }
         }
 
         //Offset x and y are coordinates relative to the div (canvas)
         canv.onmousemove = (event) => {
             if(clicked) {
-                this.draw(event)
+                if (this.props.currentTool == "fill") {
+                }
+                else {
+                    this.draw(event)
+                }
             }
             if(!clicked) {
                 x = event.offsetX
@@ -128,6 +139,7 @@ export default class Map extends Component {
 
     }
 
+
     getImageArray = () => {
         let img = getData(this.canvRef.current)
         //document.body.appendChild(img)
@@ -136,28 +148,98 @@ export default class Map extends Component {
     addImage = (x) => {
         document.body.appendChild(x)
     }
-    
-    rgbToHEX = (r, g ,b ,a) => {
-        r = r.toString(16)
-        g = g.toString(16)
-        b = b.toString(16)
-        //a = Math.round(a * 255).toString(16)
-    
-        if (r.length ==1) {
-            r = "0" + r
+
+
+    //Thank you, William (www.williammalone.com)
+    fillArea = (e, ctx) => {
+        let canvasWidth = 500
+        let canvasHeight = 500
+
+
+        let pixelStack = [[e.offsetX, e.offsetY]];
+        let pixelCoord = this.pixelated(e.offsetX, e.offsetY)
+        //get copy of imagedata to update here and paint ctx later
+        let colorLayer = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
+        //get startColor HEX value
+        let startColor = ctx.getImageData(pixelCoord.newX, pixelCoord.newY, 2, 2).data.slice(0,4)
+        //get tool color for scope sake
+        let fillColor = hexToRGB(this.props.toolColor)
+
+
+        //This breaks if you try to use the fill tool to fill the same color, so this prevents this.
+        if(rgbToHEX(startColor[0],startColor[1],startColor[2]) != this.props.toolColor) {
+            while(pixelStack.length) {
+                let newPos = pixelStack.pop();
+                let x = newPos[0];
+                let y = newPos[1];
+                
+                let pixelPos = (y*canvasWidth + x) * 4;
+                //This loop ensures logic stops at top of canvas
+                while(y-- >= 0 && matchStartColor(pixelPos))
+                {
+                    pixelPos -= canvasWidth * 4;
+                }
+                pixelPos += canvasWidth * 4;
+                ++y;
+                let reachLeft = false;
+                let reachRight = false;
+                while(y++ < canvasHeight-1 && matchStartColor(pixelPos)) {
+                    colorPixel(pixelPos);
+
+                    if(x > 0)
+                    {
+                        if(matchStartColor(pixelPos - 4))
+                        {
+                            if(!reachLeft){
+                                pixelStack.push([x - 1, y]);
+                                reachLeft = true;
+                            }
+                        }
+                        else if(reachLeft)
+                        {
+                            reachLeft = false;
+                        }
+                    }
+                    
+                    if(x < canvasWidth-1)
+                    {
+                        if(matchStartColor(pixelPos + 4))
+                        {
+                            if(!reachRight)
+                            {
+                            pixelStack.push([x + 1, y]);
+                            reachRight = true;
+                            }
+                        }
+                        else if(reachRight)
+                        {
+                            reachRight = false;
+                        }
+                    }
+                            
+                    pixelPos += canvasWidth * 4;
+                }
+            }    
+            ctx.putImageData(colorLayer, 0, 0);
         }
-        if (g.length ==1) {
-            g = "0" + g
-        }
-        if (b.length ==1) {
-            b = "0" + b
-        }
-        /*if (a.length ==1) {
-            a = "0" + a
-        }*/
+
+        function matchStartColor(pixelPos) {
+            var r = colorLayer.data[pixelPos];	
+            var g = colorLayer.data[pixelPos+1];	
+            var b = colorLayer.data[pixelPos+2];
     
-        return "#" + r + g + b// + a
+            return (r == startColor[0] && g == startColor[1] && b == startColor[2]);
+        }
+
+        function colorPixel(pixelPos) {
+            colorLayer.data[pixelPos] = fillColor[0];
+            colorLayer.data[pixelPos+1] = fillColor[1];
+            colorLayer.data[pixelPos+2] = fillColor[2];
+            colorLayer.data[pixelPos+3] = 255;
+        }
+
     }
+
     
     MapCard = () => (
         

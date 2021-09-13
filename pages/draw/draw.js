@@ -11,10 +11,7 @@ export default class Draw extends Document {
     constructor(props) {
         super(props)
         this.state = {
-            tool: {
-                tool: "Pen",
-                width: 2
-            },
+            tool: "draw",
             toolColor: "#fa8846",
             connectedUsers: [],
             canvRef: null,
@@ -61,6 +58,12 @@ export default class Draw extends Document {
         })
     }
 
+    _updateTool = (r) => {
+        this.setState({
+            tool: r
+        })
+    }
+
     View = () => (
     console.log('s')
     )
@@ -78,7 +81,7 @@ export default class Draw extends Document {
                         sendRef={this._getCanvasRef}
                         sendMount={this._getDidMapMount} 
                         toolColor={this.state.toolColor}
-                        selectedTool={this.state.tool}
+                        currentTool={this.state.tool}
                         updateDrawingArray={this._updateDrawingArray}
                         actionArray={this.state.drawingActionsArray}
                     />
@@ -87,6 +90,8 @@ export default class Draw extends Document {
                         actionArray={this.state.drawingActionsArray}
                         currentColor={this.state.toolColor}
                         sendColor={this._getToolColor}
+                        currentTool={this.state.tool}
+                        sendTool={this._updateTool}
                         cRef={this.state.canvRef}
                     />
                 </main>
