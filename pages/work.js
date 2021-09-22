@@ -29,30 +29,51 @@ export function generateQrCode() {
 
 
 //Generates image&url from Canvas obj
-export function getObjURL(canvas) {
-    var img = new Image()
-    console.log(canvas)
-    canvas.toBlob((blob)=> {
+//Sent from getData
+//@arg canvas is a sent canvas.current
+export async function getObjURL(canvas) {
+    let img = new Image()
+    let canv = canvas
+    let canvX = canv.width
+    let canvY = canv.height
+    console.log(canvX, canvY)
+    canv.toBlob(async (blob)=> {
         let url = URL.createObjectURL(blob)
         img.src = url
        // console.log("data length: " + canvas.length)
-        console.log("url: " + url)
+       console.log("url: " + url)
+       console.log("url2: " + img.src)
+       return img
     })
     return img
 }
 
-
-export function getData(canvas) {
-    let qr = generateQrCode()
+export async function getData(canvas) {
+    let imgData
+    let x = getObjURL(canvas)
         .then(qr => {
-            getObjURL(qr)
+            imgData = qr
+            console.log(imgData)
         })
         .catch(err => {
             console.log(err)
         })
-    
-    let img = getObjURL(canvas)
 }
+
+
+export function getQrCode() {
+    let qrData
+    let qr = generateQrCode()
+    .then(qr => {
+        qrData = getObjURL(qr)
+    })
+    .catch(err => {
+        console.log(err)
+    })
+    console.log(qrData)
+}
+
+
 
 export const rgbToHEX = (r, g ,b ,a) => {
     let rString = r.toString(16)

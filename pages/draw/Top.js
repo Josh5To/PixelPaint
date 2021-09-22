@@ -14,12 +14,10 @@ const Top = () => {
         
         div {
             font-family: 'LCD Solid';
-            letter-spacing: 1px;
-            grid-column-start: med 2;
-            grid-column-end: med 7;
-            grid-row-start: med 1;
-            grid-row-end: med 2;
-            place-self: center start;
+            order: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .title a {
             color: #0070f3;

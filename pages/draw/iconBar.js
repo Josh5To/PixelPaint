@@ -100,19 +100,17 @@ IconsBar = () => (
 
         <style jsx>{`
         .icon-bar {
-            grid-column-start: med 6;
-            grid-row-start: med 2;
-            grid-row-end: med 7;
             display: flex;
             flex-direction: column;
             width: 60%;
-            eight: 88%;
+            height: 88%;
+            max-width: 6vw;
+            align-self: flex-start;
         }
 
         .icon-bar button {
-            flex-basis: 0;
             flex-grow: 1;
-            flex-shrink: 1;
+            height: 7vh;
         }
 
         .icon-bar:nth-child(2): {
