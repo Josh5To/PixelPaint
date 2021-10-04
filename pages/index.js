@@ -1,5 +1,5 @@
 import React from 'react';
-import Draw from './draw/draw'
+import Draw from '../components/draw'
 
 
 const App = () => (

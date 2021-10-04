@@ -1,6 +1,6 @@
 import { Work } from '@material-ui/icons';
 import React, {Component, useRef, useEffect, useState} from 'react';
-import { getData, hexToRGB, rgbToHEX } from '../work';
+import { getData, hexToRGB, rgbToHEX, pinImage } from '../work';
 
 export default class Map extends Component {
     constructor(props) {
@@ -49,7 +49,7 @@ export default class Map extends Component {
     rendCanvas = (vcanv, vctx) => {  
         //sameBlock is set to false if mouse is moving but on the same 'pixelated' area. 
         //This keeps priormove array size down do to not reporting duplicates, which makes the undo button work more betterly
-       let sameBlock
+        let sameBlock
 
         this.props.sendRef(vcanv)  
         let ctx = vctx;
@@ -64,8 +64,12 @@ export default class Map extends Component {
         this.draw = (e) => {
             //ctx will be the context of this canv
             ctx.fillStyle = this.props.toolColor;
-            var x = e.offsetX// - 10;
-            var y = e.offsetY// - 10;
+            let sizeOffX = (500 / parseInt(this.canvRef.current.offsetWidth))
+            let sizeOffY = (500 / parseInt(this.canvRef.current.offsetHeight))
+
+            var x = e.offsetX * sizeOffX
+            var y = e.offsetY * sizeOffY
+
             //Send to math.floor function to create pixelated coloring
             let sick = this.pixelated(x, y)
             let priorColor = ctx.getImageData(sick.newX, sick.newY, 20, 20).data.slice(0,4)
@@ -83,7 +87,6 @@ export default class Map extends Component {
                 this.props.updateDrawingArray(newDrawingArray)
             }
 
-            console.log(priorColor)
             if((sick.newX == this.props.actionArray[this.props.actionArray.length -1].coordX && sick.newY == this.props.actionArray[this.props.actionArray.length -1].coordY)) {
                 sameBlock = true
                 if(ctx.fillStyle != rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) ) {
@@ -106,7 +109,7 @@ export default class Map extends Component {
             }
         }
 
-        canv.onmousedown = (e) => {   
+        this.canvRef.current.onmousedown = (e) => {   
             clicked = true;
             if (this.props.currentTool == "fill") {
                 this.fillArea(e, ctx)
@@ -117,7 +120,7 @@ export default class Map extends Component {
         }
 
         //Offset x and y are coordinates relative to the div (canvas)
-        canv.onmousemove = (event) => {
+        this.canvRef.current.onmousemove = (event) => {
             if(clicked) {
                 if (this.props.currentTool == "fill") {
                 }
@@ -132,7 +135,7 @@ export default class Map extends Component {
         }
 
  
-        canv.onmouseup = (event) => {
+        this.canvRef.current.onmouseup = (event) => {
             sameBlock = false;
             clicked = false;
         }
@@ -141,7 +144,8 @@ export default class Map extends Component {
 
 
     getImageArray = () => {
-        let img = getData(this.canvRef.current)
+        let x = pinImage(this.canvRef.current)
+        //let img = getData(this.canvRef.current)
         //document.body.appendChild(img)
     }
 
@@ -152,12 +156,21 @@ export default class Map extends Component {
 
     //Thank you, William (www.williammalone.com)
     fillArea = (e, ctx) => {
+        //This can remain the static "should be" size of the canvas
         let canvasWidth = 500
         let canvasHeight = 500
+        //Get offset (ratio) of actual canvas size vs set canvas size (x,y)
+        let sizeOffX = (500 / parseInt(this.canvRef.current.offsetWidth))
+        let sizeOffY = (500 / parseInt(this.canvRef.current.offsetHeight))
+        console.log(sizeOffX)
+        //Floor the click coord * the offset ratio to recieve where click is. (Can't be a float)
+        let calcX = Math.floor(e.offsetX * sizeOffX)
+        let calcY = Math.floor(e.offsetY * sizeOffY)
 
 
-        let pixelStack = [[e.offsetX, e.offsetY]];
-        let pixelCoord = this.pixelated(e.offsetX, e.offsetY)
+        let pixelStack = [[calcX, calcY]];
+        console.log(pixelStack[0])
+        let pixelCoord = this.pixelated(calcX, calcY)
         //get copy of imagedata to update here and paint ctx later
         let colorLayer = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
         //get startColor HEX value
@@ -172,8 +185,10 @@ export default class Map extends Component {
                 let newPos = pixelStack.pop();
                 let x = newPos[0];
                 let y = newPos[1];
+                console.log("x, y: " + x, y)
                 
                 let pixelPos = (y*canvasWidth + x) * 4;
+                console.log(pixelPos)
                 //This loop ensures logic stops at top of canvas
                 while(y-- >= 0 && matchStartColor(pixelPos))
                 {
@@ -251,14 +266,12 @@ export default class Map extends Component {
 
         <style jsx>{`
         .mapcard {
-            grid-column-start: med 2;
-            grid-column-end: med 6;
-            grid-row-start: med 2;
-            grid-row-end: med 7;
+            cursor: crosshair;
+            display: flex;
+            flex-direction: column;
         }
         .canvcard {
-            display: flex;
-            cursor: cell;
+            width: 100%;
         }
 
         @media screen and (max-width: 895px) {

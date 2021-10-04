@@ -77,27 +77,29 @@ export default class Draw extends Document {
                 </Head>
                 <main>
                     <Top />
-                    <Map 
-                        sendRef={this._getCanvasRef}
-                        sendMount={this._getDidMapMount} 
-                        toolColor={this.state.toolColor}
-                        currentTool={this.state.tool}
-                        updateDrawingArray={this._updateDrawingArray}
-                        actionArray={this.state.drawingActionsArray}
-                    />
-                    <IconsBar 
-                        updateDrawingArray={this._updateDrawingArray}
-                        actionArray={this.state.drawingActionsArray}
-                        currentColor={this.state.toolColor}
-                        sendColor={this._getToolColor}
-                        currentTool={this.state.tool}
-                        sendTool={this._updateTool}
-                        cRef={this.state.canvRef}
-                    />
+                    <div className="middle-row">
+                        <Map 
+                            sendRef={this._getCanvasRef}
+                            sendMount={this._getDidMapMount} 
+                            toolColor={this.state.toolColor}
+                            currentTool={this.state.tool}
+                            updateDrawingArray={this._updateDrawingArray}
+                            actionArray={this.state.drawingActionsArray}
+                        />
+                        <IconsBar 
+                            updateDrawingArray={this._updateDrawingArray}
+                            actionArray={this.state.drawingActionsArray}
+                            currentColor={this.state.toolColor}
+                            sendColor={this._getToolColor}
+                            currentTool={this.state.tool}
+                            sendTool={this._updateTool}
+                            cRef={this.state.canvRef}
+                        />
+                    </div>
                 </main>
-                <div className="color-card">
-                    <SelectTool cRef={this.state.canvRef} sendNewTool={this._getSelectedTool} />
-                </div>
+                <footer>
+
+                </footer>
 
                 <style jsx>{`
                 .container {
@@ -105,16 +107,19 @@ export default class Draw extends Document {
                 }
 
                 .colorPick {
-                    display: flex;
-                    flex-wrap: wrap;
+
                 }
 
                 main {
-                    display: grid;
-                    grid-template-columns: repeat(8, 10vw [med]);
-                    grid-template-rows: [med] 10vh repeat(6,10vh[med]) 25vh;
-                    grid-column-gap: 3vw;
-                    grid-row-gap: .71vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .middle-row {
+                    order: 2;
+                    display: flex;
+                    justify-content: center;
+
                 }
 
 
