@@ -1,6 +1,6 @@
 import { Work } from '@material-ui/icons';
 import React, {Component, useRef, useEffect, useState} from 'react';
-import { getData, hexToRGB, rgbToHEX } from '../work';
+import { getData, hexToRGB, rgbToHEX, pinImage } from '../work';
 
 export default class Map extends Component {
     constructor(props) {
@@ -144,7 +144,8 @@ export default class Map extends Component {
 
 
     getImageArray = () => {
-        let img = getData(this.canvRef.current)
+        let x = pinImage(this.canvRef.current)
+        //let img = getData(this.canvRef.current)
         //document.body.appendChild(img)
     }
 

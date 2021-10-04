@@ -6,6 +6,7 @@ import BrushIcon from '@material-ui/icons/Brush';
 import SaveIcon from '@material-ui/icons/Save';
 import FormatColorFillIcon from '@material-ui/icons/FormatColorFill';
 import { ChromePicker } from 'react-color';
+import { connectWallet, rgbToHEX } from '../work';
 
 export default class IconBar extends Component {
     constructor(props) {
@@ -27,9 +28,9 @@ sendUndoAction = () => {
         //lastItem is the most recent array item, and actionArray is reduced by this value.
         let lastItem = actionArray.pop() 
 
-        ctx.fillStyle = this.rgbToHEX(lastItem.color[0], lastItem.color[1], lastItem.color[2], lastItem.color[3]) 
+        ctx.fillStyle = rgbToHEX(lastItem.color[0], lastItem.color[1], lastItem.color[2], lastItem.color[3]) 
         console.log(lastItem)
-        console.log(this.rgbToHEX(lastItem.color[0], lastItem.color[1], lastItem.color[2], lastItem.color[3]))
+        console.log(rgbToHEX(lastItem.color[0], lastItem.color[1], lastItem.color[2], lastItem.color[3]))
 
         ctx.fillRect(lastItem.coordX, lastItem.coordY, 20, 20)
         this.props.updateDrawingArray(actionArray)
@@ -58,59 +59,59 @@ colorChangeComplete = (color) => {
     this.props.sendColor(color.hex);
 };
 
-rgbToHEX = (r, g ,b ,a) => {
-    r = r.toString(16)
-    g = g.toString(16)
-    b = b.toString(16)
-    //a = Math.round(a * 255).toString(16)
-
-    if (r.length ==1) {
-        r = "0" + r
-    }
-    if (g.length ==1) {
-        g = "0" + g
-    }
-    if (b.length ==1) {
-        b = "0" + b
-    }
-    /*if (a.length ==1) {
-        a = "0" + a
-    }*/
-
-    return "#" + r + g + b// + a
+getWallet = () => {
+    connectWallet()
 }
+
 
 IconsBar = () => (
 
         <div className="icon-bar">
-            <button onClick={this.sendUndoAction}><ReplayIcon/></button>
-            <button onClick={this.showColorTool}><OpacityIcon/></button>
-            <div className="color-picker">
-                <ChromePicker 
-                    color={ this.props.currentColor }
-                    onChange={ this.colorChangeComplete }
-                    disableAlpha={true}
-                />
+            <div className="ib-topSet">
+                <button onClick={this.sendUndoAction}><ReplayIcon/></button>
+                <button onClick={this.showColorTool}><OpacityIcon/></button>
+                <div className="color-picker">
+                    <ChromePicker 
+                        color={ this.props.currentColor }
+                        onChange={ this.colorChangeComplete }
+                        disableAlpha={true}
+                    />
+                </div>
+                <button onClick={() => this.props.sendTool("draw")}><BrushIcon/></button>
+                <button onClick={() => this.props.sendTool("fill")}><FormatColorFillIcon/></button>
+                <button onClick={() => this.getWallet()}><StopIcon/></button>
+                <button onClick={this.clearCanvas}>Clear</button>
             </div>
-            <button onClick={() => this.props.sendTool("draw")}><BrushIcon/></button>
-            <button onClick={() => this.props.sendTool("fill")}><FormatColorFillIcon/></button>
-            <button><StopIcon/></button>
-            <button><SaveIcon/></button>
-            <button onClick={this.clearCanvas}>Clear</button>
+            <div className="ib-bottomSet">
+                <button><SaveIcon/></button>
+                <button >Mint</button>
+            </div>
 
         <style jsx>{`
         .icon-bar {
             display: flex;
             flex-direction: column;
-            width: 60%;
-            height: 88%;
+            width: 100%;
             max-width: 6vw;
-            align-self: flex-start;
+            align-self: stretch;
         }
 
-        .icon-bar button {
+        .ib-topSet {
+            display: flex;
+            flex-direction: column;
+            height: 60%;
+            max-width: 6vw;
+        }
+
+        .ib-topSet button, .ib-bottomSet button {
             flex-grow: 1;
             height: 7vh;
+        }
+
+        .ib-bottomSet {
+            display: flex;
+            margin-top: auto;
+            flex-direction: column;
         }
 
         .icon-bar:nth-child(2): {

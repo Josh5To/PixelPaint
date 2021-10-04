@@ -1,24 +1,45 @@
 const Top = () => {
     return(
-    <div>
-        <h1 className="title">
-            Pixel Paint
-        </h1>
+    <div className="top">
+        <div className="left"></div>
+        <div className="center">
+            <h1 className="title">
+                Pixel Paint
+            </h1>
 
-        <p className="description">
-            Do you.
-        </p>
-
+            <p className="description">
+                Do you.
+            </p>
+        </div>
+        <div className="right"></div>
         <style jsx>{`
 
         
-        div {
+        .top {
             font-family: 'LCD Solid';
             order: 1;
             display: flex;
+            flex-direction: row;
+        }
+        .left {
+            order: 1;
+            width: 50%;
+        }
+        .center {
+            order: 2;
+            align-self: center;
+            display: flex;
+            justify-content: center;
+            width: 100%;
             flex-direction: column;
             align-items: center;
         }
+        .right {
+            order: 3;
+            width: 50%;
+        }
+
+
         .title a {
             color: #0070f3;
             text-decoration: none;
