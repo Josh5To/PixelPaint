@@ -1,6 +1,7 @@
 import { env } from 'process'
 import pinataSDK from '@pinata/sdk'
 import FormData from 'form-data'
+import fs from 'fs'
 
 const pinata = pinataSDK(env.PINATA_APIKEY, env.PINATA_APISECRET);
 const pinataAPIKey = env.PINATA_APIKEY
@@ -17,18 +18,13 @@ export function test() {
     });
 }
 
-export async function pinFile(imageDataObjString) {
-   /* console.log(await imageDataObjString.locked)
-    const idData = new Uint8ClampedArray(await imageDataObjString)
-  //  const imageDataReformed
-    console.log(idData)
-    const rebuildImageData = new ImageData(idData, 500, 500)
-    //console.log(rebuildImageData)
+export async function pinFile(pathString) {
+
 
     //define variable for formdata to load all info to be pinned.
-    const fileData = new FormData()*/
+    const fileData = new FormData()
 
-    fileData.append('file', blobStream)
+    fileData.append('file', fs.createReadStream(pathString))
 
     const metadata = JSON.stringify({
         name: 'testname',

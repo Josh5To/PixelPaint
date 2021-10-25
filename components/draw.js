@@ -1,7 +1,7 @@
 import React, {Component, PropTypes, useEffect, useState} from 'react';
 import Document, { Main, NextScript } from 'next/document';
 import Head from 'next/head'
-import Color from './color';
+import Colors from './color';
 import Map from './Map';
 import Top from './Top';
 import SelectTool from './SelectTool'
@@ -13,7 +13,7 @@ export default class Draw extends Document {
         this.state = {
             tool: "draw",
             toolColor: "#fa8846",
-            connectedUsers: [],
+            connectedUsers: false,
             canvRef: null,
             drawingActionsArray: []
         }
@@ -22,13 +22,9 @@ export default class Draw extends Document {
         this.setState({
             windowWidth: window.innerWidth
         })
-        console.log(window.innerWidth) 
-        console.log(window.devicePixelRatio)
     }
 
     componentDidUpdate() {
-        console.log(window.innerWidth) 
-        console.log(window.devicePixelRatio)
     }
 
     //Sent to color tool component to recieve tool color.
@@ -38,10 +34,11 @@ export default class Draw extends Document {
         })
     }
     //Used for some crazy webhook idea
-    _getDidMapMount = (yn) => {
+    _getUserConnected = (yn) => {
         this.setState({
             connectedUsers: yn
         })
+
     }
 
     //Sent to Map component to get ref for drawing canvas.
@@ -65,7 +62,7 @@ export default class Draw extends Document {
     }
 
     View = () => (
-    console.log('s')
+        console.log('s')
     )
 
     render() {
@@ -78,9 +75,14 @@ export default class Draw extends Document {
                 <main>
                     <Top />
                     <div className="middle-row">
+                        <Colors
+                            sendColor={this._getToolColor}
+                            currentColor={this.state.toolColor}
+                        />
                         <Map 
                             sendRef={this._getCanvasRef}
-                            sendMount={this._getDidMapMount} 
+                            sendConnected={this._getUserConnected} 
+                            userConnected={this.state.connectedUsers}
                             toolColor={this.state.toolColor}
                             currentTool={this.state.tool}
                             updateDrawingArray={this._updateDrawingArray}
@@ -94,6 +96,8 @@ export default class Draw extends Document {
                             currentTool={this.state.tool}
                             sendTool={this._updateTool}
                             cRef={this.state.canvRef}
+                            sendConnected={this._getUserConnected} 
+                            userConnected={this.state.connectedUsers}
                         />
                     </div>
                 </main>
@@ -161,7 +165,7 @@ export default class Draw extends Document {
                     margin: 0;
                     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
                     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-                    background-color: #4d4d4d;
+                    background-color: #242424;
                     color: #EBEEE8;
                 }
 

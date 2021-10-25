@@ -5,53 +5,67 @@
 
 */
 import { ethers } from "ethers";
-import { env } from 'process'
 import QRCode from 'qrcode'
-import FormData from 'form-data'
-
-const pinataAPIKey = env.PINATA_APIKEY
-const pinataAPISecret = env.PINATA_APISECRET
-const mongoDbUri = env.MONGODB_URI
 
 export async function connectWallet() {
     //define variable that holds nonce for signing.
     let nonce
+    //define variable that holds signed message from user
+    let signature
 
     //Get metamask info
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     //Get signer
     const signer = provider.getSigner()
 
-    //Get address from metamask.
-    let getWalletAddress = await signer.getAddress()
-
-    console.log(getWalletAddress)
-    /*  
-
-        Check if address exists in db so far. If it does, request will return either:
-        New nonce that is generated after last authentication, or fresh nonce from newly created db entry.
-        Nesting these within (.then) functions so nothing occurs when it's not supposed to.
-
-    */
-    authApiCall("?checkaddress=" + getWalletAddress).then(async nonceObj => {
-        nonce = JSON.parse(nonceObj).nonce
-        //save as variable to keep susinct throughout operations (validations later)
-        let message = "To sign in, sign this one time nonce: " + nonce
-        //Prompt user to sign message, get hex of signed message, then send publicAddress, message, and signed message to db.
-        let signature = await signer.signMessage(message);
+    let connectedWallet = new Promise( async (resolve, reject) => {
+        //Get address from metamask.
+        try {
+            let getWalletAddress = await signer.getAddress()
+            console.log(getWalletAddress)
+            /*  
         
-        let signedObj = {
-            purpose: "validation",
-            walletAddress: getWalletAddress,
-            message: message,
-            signedMessage: signature,
+                Check if address exists in db so far. If it does, request will return either:
+                New nonce that is generated after last authentication, or fresh nonce from newly created db entry.
+                Nesting these within (.then) functions so nothing occurs when it's not supposed to.
+        
+            */
+            authApiCall("?checkaddress=" + getWalletAddress).then(async (nonceObj) => {
+                nonce = JSON.parse(nonceObj).nonce
+                //save as variable to keep susinct throughout operations (validations later)
+                let message = "To sign in, sign this one time nonce: " + nonce
+                //Prompt user to sign message, get hex of signed message, then send publicAddress, message, and signed message to db.
+                try {
+                    let signature = await signer.signMessage(message);
+                    console.log(signature)
+                    
+                    let signedObj = {
+                        purpose: "validation",
+                        walletAddress: getWalletAddress,
+                        message: message,
+                        signedMessage: signature,
+                    }
+                    sendSignedMessageAuth(JSON.stringify(signedObj)).then(x => {
+                        //TODO
+                        //Eventually this should recieve a JWT. When I go and encrypt everything.
+                        console.log(x)
+                        resolve(x)
+                    })
+                }
+                catch(e) {
+                    console.log(e.message)
+                    resolve(false)
+                }
+            })
         }
-        sendSignedMessageAuth(signedObj).then(x => {
-            //TODO
-            //Eventually this should recieve a JWT. When I go and encrypt everything.
-            console.log(x)
-        })
+        catch(e) {
+            if (e.toString().includes("unknown account")) {
+                console.log("No wallet account active.")
+                resolve(false)
+            }
+        }
     })
+    return(connectedWallet)
 }
 
 //generates Qr code, returns QR code canvas obj
@@ -59,7 +73,6 @@ export function generateQrCode() {
     var strBytes = new Uint8ClampedArray("google.com")
     var segs = [
         { data: strBytes, mode: 'byte' },
-        //{ data: '0123456', mode: 'numeric' }
     ]
     let r = QRCode.toCanvas([segs])
         .then(r => {
@@ -74,21 +87,21 @@ export function generateQrCode() {
 
 //Gets canvas, creates blob, converts to stream, sends to api for pinning.
 export async function pinImage(canvas) {
-    
-    const data = await new Promise((resolve, reject) => { 
-        //canv.getImageData(can.)
-        let canv = canvas.getContext('2d')
-        let canvID = canv.getImageData(0, 0, 500, 500)
-        let canvDataObj = {
-            data: canvID.data,
-            height: canvID.height,
-            width: canvID.width
-        }
-        return resolve(canvID)
+    //Data receives blob from canvas
+    const data = new Promise(async (resolve, reject) => {
+        canvas.toBlob(async (blob) => {
+            console.log(blob)
+            let pinApiResponse = await imageDataToMintAPI(blob)
+            if(pinApiResponse) {
+                resolve(pinApiResponse)
+            }
+            else {
+                resolve(pinApiResponse)
+            }
+        })
     })
-    console.log(data.data.buffer)
-    let pinApiResponse = await imageDataToMintAPI(data.data.buffer)
-    console.log(pinApiResponse)
+    //Only once data is recieved do we continue
+    return data
 }
 
 
@@ -226,7 +239,8 @@ async function authApiCall(query) {
 
 */
 async function sendSignedMessageAuth(message) {
-    let encodeObj = JSON.stringify(message)
+ //   let encodeObj = JSON.stringify(message)
+    let encodeObj = message
 
     const response = await fetch('/api/auth', {
         method: 'POST',
@@ -241,4 +255,14 @@ async function sendSignedMessageAuth(message) {
     else {
         return new Error("Response from API not good.")
     } 
+}
+
+export function createFileID(){
+    var dt = new Date().getTime();
+    var id = 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
+        var r = (dt + Math.random()*16)%16 | 0;
+        dt = Math.floor(dt/16);
+        return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+    });
+    return id;
 }

@@ -1,6 +1,6 @@
-import { Work } from '@material-ui/icons';
-import React, {Component, useRef, useEffect, useState} from 'react';
-import { getData, hexToRGB, rgbToHEX, pinImage } from '../work';
+import React, {Component} from 'react';
+import { hexToRGB, rgbToHEX, pinImage } from '../work';
+import {connectionStatus} from './middleComponents/connectionStatus'
 
 export default class Map extends Component {
     constructor(props) {
@@ -14,8 +14,6 @@ export default class Map extends Component {
 
 
     componentDidMount = () => {
-        var mount = [0]
-        this.props.sendMount(mount);    
         this.drawCtx = this.canvRef.current.getContext('2d');
         this.rendCanvas(this.canvRef.current, this.drawCtx)
     }
@@ -52,16 +50,25 @@ export default class Map extends Component {
         let sameBlock
 
         this.props.sendRef(vcanv)  
+        //Get parsed json object of moves
         let ctx = vctx;
         let canv = vcanv;
         let x;
         let y;
+        let keyName = "movementObj"
+        var dataArray
+        let clicked
+
+
 
         ctx.fillStyle = "#fff"
-        let clicked
         ctx.fillRect(0, 0, 500, 500)
+        sessionStorage.removeItem(keyName)
 
         this.draw = (e) => {
+            if(sessionStorage.getItem(keyName) != null) {
+                dataArray = JSON.parse(sessionStorage.getItem(keyName)).dataArray
+            }
             //ctx will be the context of this canv
             ctx.fillStyle = this.props.toolColor;
             let sizeOffX = (500 / parseInt(this.canvRef.current.offsetWidth))
@@ -81,31 +88,36 @@ export default class Map extends Component {
             }
             //If array does not have atleast one item so .length returns something, 
             //next if statement will break. This check insures theres atleast one item added to array.
-            if(this.props.actionArray[this.props.actionArray.length -1] == undefined) {
-                let newDrawingArray = this.props.actionArray
-                newDrawingArray.push(priorMove)
-                this.props.updateDrawingArray(newDrawingArray)
-            }
-
-            if((sick.newX == this.props.actionArray[this.props.actionArray.length -1].coordX && sick.newY == this.props.actionArray[this.props.actionArray.length -1].coordY)) {
-                sameBlock = true
-                if(ctx.fillStyle != rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) ) {
-                    sameBlock = false
+            if(sessionStorage.getItem(keyName) == null) {
+                let movementObj = {
+                    dataArray: []
                 }
-
-            } 
-            else {
-                //Mouse has left prior pixel area, able to work as normal now.
-                sameBlock = false
-            }
-            //Do not do this stuff if mouse is in same pixel
-            if (!sameBlock) {
-            // console.log(ctx.getImageData(sick.newX, sick.newY, 20, 20).data)
                 ctx.fillRect(sick.newX, sick.newY, 20, 20)
-                let newDrawingArray = this.props.actionArray
-                newDrawingArray.push(priorMove)
-                this.props.updateDrawingArray(newDrawingArray)
-            //console.log(newDrawingArray)
+                movementObj.dataArray.push(priorMove)
+                sessionStorage.setItem(keyName, JSON.stringify(movementObj))
+                console.log(dataArray)
+            } else if(dataArray[dataArray.length -1] != undefined) {
+                if((sick.newX == dataArray[dataArray.length -1].coordX && sick.newY == dataArray[dataArray.length -1].coordY)) {
+                    if(rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) === ctx.fillStyle) {
+
+                    } else {
+                        ctx.fillRect(sick.newX, sick.newY, 20, 20)
+                        dataArray.push(priorMove)
+                        sessionStorage.setItem(keyName, JSON.stringify({dataArray}))
+                    }
+                } else {
+                    if(ctx.fillStyle != rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) ) {
+                        ctx.fillRect(sick.newX, sick.newY, 20, 20)
+                        dataArray.push(priorMove)
+                        sessionStorage.setItem(keyName, JSON.stringify({dataArray}))
+                    }
+                }
+            } else {
+                if(ctx.fillStyle != rgbToHEX(priorColor[0], priorColor[1], priorColor[2], priorColor[3]) ) {
+                    ctx.fillRect(sick.newX, sick.newY, 20, 20)
+                    dataArray.push(priorMove)
+                    sessionStorage.setItem(keyName, JSON.stringify({dataArray}))
+                }
             }
         }
 
@@ -134,6 +146,10 @@ export default class Map extends Component {
             }
         }
 
+        this.canvRef.current.onmouseleave = () => {
+            sameBlock = false;
+            clicked = false;
+        }
  
         this.canvRef.current.onmouseup = (event) => {
             sameBlock = false;
@@ -142,17 +158,9 @@ export default class Map extends Component {
 
     }
 
-
-    getImageArray = () => {
-        let x = pinImage(this.canvRef.current)
-        //let img = getData(this.canvRef.current)
-        //document.body.appendChild(img)
-    }
-
     addImage = (x) => {
         document.body.appendChild(x)
     }
-
 
     //Thank you, William (www.williammalone.com)
     fillArea = (e, ctx) => {
@@ -162,14 +170,12 @@ export default class Map extends Component {
         //Get offset (ratio) of actual canvas size vs set canvas size (x,y)
         let sizeOffX = (500 / parseInt(this.canvRef.current.offsetWidth))
         let sizeOffY = (500 / parseInt(this.canvRef.current.offsetHeight))
-        console.log(sizeOffX)
         //Floor the click coord * the offset ratio to recieve where click is. (Can't be a float)
         let calcX = Math.floor(e.offsetX * sizeOffX)
         let calcY = Math.floor(e.offsetY * sizeOffY)
 
 
         let pixelStack = [[calcX, calcY]];
-        console.log(pixelStack[0])
         let pixelCoord = this.pixelated(calcX, calcY)
         //get copy of imagedata to update here and paint ctx later
         let colorLayer = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
@@ -185,10 +191,8 @@ export default class Map extends Component {
                 let newPos = pixelStack.pop();
                 let x = newPos[0];
                 let y = newPos[1];
-                console.log("x, y: " + x, y)
                 
                 let pixelPos = (y*canvasWidth + x) * 4;
-                console.log(pixelPos)
                 //This loop ensures logic stops at top of canvas
                 while(y-- >= 0 && matchStartColor(pixelPos))
                 {
@@ -262,16 +266,21 @@ export default class Map extends Component {
             <canvas className="canvcard" width='500' height='500' ref={this.canvRef}>
             
             </canvas>
-            <button onClick={this.getImageArray}>Hello</button>
+            <div className="connection-notice">{connectionStatus(this.props.userConnected)}</div>
 
         <style jsx>{`
         .mapcard {
-            cursor: crosshair;
+            cursor: ${this.props.currentTool == "fill" ? "url(images/fill-cursor2.png), pointer" : "cell"};
             display: flex;
             flex-direction: column;
         }
         .canvcard {
-            width: 100%;
+            height: 100%;
+        }
+        .connection-notice {
+            cursor: default;
+            position: absolute;
+            top: 15%;
         }
 
         @media screen and (max-width: 895px) {
