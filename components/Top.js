@@ -4,11 +4,11 @@ const Top = () => {
         <div className="left"></div>
         <div className="center">
             <h1 className="title">
-                Pixel Paint
+                ?
             </h1>
 
             <p className="description">
-                Do you.
+                ?
             </p>
         </div>
         <div className="right"></div>
