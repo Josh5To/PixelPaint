@@ -195,22 +195,41 @@ export const hexToRGB = (h) => {
 //Argument is JSON string of ImageArray data raw, height, and width of canvas.
 async function imageDataToMintAPI(idObjectString) {
     //let idString = JSON.stringify(idObjectString)
-    let idString = idObjectString
-
-    const response = await fetch('/api/mint', {
-        method: 'POST',
-        body: idString,
-        headers: {
-          //'Content-Type': 'application/json',
+    let streamedObj = idObjectString.stream().getReader()
+    streamedObj.read().then(async imgData => {
+        let idString = {
+            name: "Test",
+            image: imgData.value.join(','),
         }
-    });
-    console.log(response)
-    if(response.ok) {
-        return response.text()
-    }
-    else {
-        return new Error("Response from API not good.")
-    } 
+        let jsonIDString = JSON.stringify(idString)
+        //await streamedObj.cancel()
+        //let buf1 = Buffer.from(jsonIDString, 'base64')
+
+        const response = await fetch('/api/mint', {
+            method: 'POST',
+            body: jsonIDString,
+            headers: {
+                //'Content-Type': 'application/json',
+            }
+        });
+        console.log(response)
+        if(response.ok) {
+            return response.text()
+        }
+        else {
+            return new Error("Response from API not good.")
+        } 
+    })
+
+    /*streamedObj.on('readable', () => {
+        let chunk;
+        console.log('Stream is readable (new data received in buffer)');
+        // Use a loop to make sure we read all currently available data
+        while (null !== (chunk = readable.read())) {
+          console.log(`Read ${chunk.length} bytes of data...`);
+        }
+    })*/
+    //console.log(stringedObj)
 }
 
 async function authApiCall(query) {
