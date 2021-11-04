@@ -6,7 +6,7 @@ export default async (req, res) => {
         //console.log(`Get request: ${res.statusCode} ${req.statusMessage} ${req.readable}`)
         if(req.body.purpose === "validation") {
             console.log("Request print: ")
-            //console.log(req)
+            console.log(req)
             let validate = await validateUser(req.body)
             res.status(200).send(validate)
         }
